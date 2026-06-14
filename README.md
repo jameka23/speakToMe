@@ -1,4 +1,4 @@
-# PredictiveVoice
+# Speak For Me predictive text app
 
 An AAC-inspired communication app designed to help individuals with temporary or permanent speech impairments communicate quickly through predictive phrase generation and text-to-speech.
 
