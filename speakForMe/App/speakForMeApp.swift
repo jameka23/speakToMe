@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct speakForMeApp: App {
@@ -13,5 +14,6 @@ struct speakForMeApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: Phrase.self) // setting swiftdata and making sure Phrase is stored 
     }
 }
