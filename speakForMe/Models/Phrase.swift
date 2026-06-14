@@ -10,21 +10,21 @@ import SwiftData
 
 @Model
 class Phrase {
-    var id: Int
+    @Attribute(.unique)
+    var id: UUID
+    
     var text: String
     var createdAt: Date
     var lastUsedAt: Date
     var useCount: Int
-    var category: String
     var isFavorite: Bool
     
-    init(id: Int, text: String, createdAt: Date, lastUsedAt: Date, useCount: Int, category: String, isFavorte: Bool) {
+    init(id: UUID = UUID(), text: String, createdAt: Date = .now, lastUsedAt: Date = .now, useCount: Int = 0, isFavorite: Bool = false) {
         self.id = id
         self.text = text
         self.createdAt = createdAt
         self.lastUsedAt = lastUsedAt
         self.useCount = useCount
-        self.category = category
-        self.isFavorite = isFavorte
+        self.isFavorite = isFavorite
     }
 }
