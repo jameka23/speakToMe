@@ -7,9 +7,12 @@
 
 import Foundation
 
-struct PhraseCategory {
-    var id: Int
-    var name: String
-    var icon: String
-    var sortOrder: Int
+enum PhraseCategory: String, CaseIterable {
+    case pain
+    case food
+    case water
+    case bathroom
+    case comfort
+    case emergency
+    case family
 }

@@ -8,7 +8,9 @@
 import Foundation
 
 struct SentenceDraft {
-    var id: Int
-    var words: [String]
-    var test: String
+    var words: [String] = []
+
+    var text: String {
+        words.joined(separator: " ")
+    }
 }

@@ -7,9 +7,8 @@
 
 import Foundation
 
-struct WordOption {
-    var id: Int
-    var text: String
-    var category: String
-    var priority: String
+struct WordOption: Identifiable {
+    let id = UUID()
+    let text: String
+    let category: PhraseCategory
 }
