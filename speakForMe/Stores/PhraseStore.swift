@@ -23,25 +23,34 @@ final class PhraseStore {
 
         let phrase = Phrase(
             text: trimmedText,
-            createdAt: .now,
-            lastUsedAt: .now,
-            useCount: 1,
-            isFavorite: false
+            useCount: 1
         )
 
         modelContext.insert(phrase)
+        saveChanges()
     }
 
     func deletePhrase(_ phrase: Phrase) {
         modelContext.delete(phrase)
+        saveChanges()
     }
 
     func markPhraseUsed(_ phrase: Phrase) {
         phrase.useCount += 1
         phrase.lastUsedAt = .now
+        saveChanges()
     }
 
     func toggleFavorite(_ phrase: Phrase) {
         phrase.isFavorite.toggle()
+        saveChanges()
+    }
+    
+    func saveChanges() {
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save phrase changes: \(error)")
+        }
     }
 }
