@@ -14,6 +14,6 @@ struct speakForMeApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: Phrase.self) // setting swiftdata and making sure Phrase is stored 
+        .modelContainer(for: Phrase.self) // setting swiftdata and making sure Phrase is stored
     }
 }

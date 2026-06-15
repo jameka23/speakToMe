@@ -8,13 +8,15 @@
 import SwiftUI
 
 struct ContentView: View {
+   @State private var speechService = SpeechService()
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            Button("Speak Test") {
+                speechService.speak("I need water")
+            }
         }
+        .buttonStyle(.borderedProminent)
         .padding()
     }
 }
