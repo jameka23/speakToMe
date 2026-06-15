@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct PredicationResult {
+struct PredictionResult {
     let suggestions: [WordOption]
 }
 
