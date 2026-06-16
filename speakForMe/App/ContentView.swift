@@ -6,8 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
+    
+    // adding model context
+    @Environment(\.modelContext) private var modelContext
+    
     @State private var speechService = SpeechService()
     @State private var draft = SentenceDraft()
     
@@ -55,7 +60,7 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
                 
                 Button("Speak") {
-                    speechService.speak(draft.text)
+                    speakAndSave()
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(draft.text.isEmpty)
@@ -63,8 +68,35 @@ struct ContentView: View {
         }
         .padding()
     }
+    
+    /// This method saves the sentence that is spoken into history once a user hits the 'Speak' button
+    private func speakAndSave() {
+        let text = draft.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !text.isEmpty else { return }
+        
+        speechService.speak(text)
+        
+        let phrase = Phrase(
+            text: text,
+            createdAt: .now,
+            lastUsedAt: .now,
+            useCount: 1,
+            isFavorite: false
+        )
+        
+        modelContext.insert(phrase) // insert newly created Phrase entity
+        
+        do {
+            try modelContext.save()
+            print("saved phrase:", text)
+        } catch {
+            print("failed to save phrase bc of:", error.localizedDescription)
+        }
+    }
 }
 
 #Preview {
     ContentView()
+        .modelContainer(for: Phrase.self, inMemory: true) // this helps with xcode bs and offline support
 }
