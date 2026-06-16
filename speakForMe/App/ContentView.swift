@@ -13,6 +13,8 @@ struct ContentView: View {
     // adding model context
     @Environment(\.modelContext) private var modelContext
     
+    @Binding var phraseToReuse: String?
+    
     @State private var speechService = SpeechService()
     @State private var draft = SentenceDraft()
     
@@ -67,6 +69,15 @@ struct ContentView: View {
             }
         }
         .padding()
+        .onChange(of: phraseToReuse) { _, newValue in
+                    guard let newValue else { return }
+
+                    draft.words = newValue
+                        .split(separator: " ")
+                        .map(String.init)
+
+                    phraseToReuse = nil
+        }
     }
     
     /// This method saves the sentence that is spoken into history once a user hits the 'Speak' button
@@ -97,6 +108,6 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(phraseToReuse: .constant(nil))
         .modelContainer(for: Phrase.self, inMemory: true) // this helps with xcode bs and offline support as chatgpt says “Use a temporary SwiftData container that disappears when the preview reloads.” lol this goober lol love you chat
 }

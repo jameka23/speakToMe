@@ -12,7 +12,7 @@ import SwiftData
 struct speakForMeApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
         }
         .modelContainer(for: Phrase.self) // setting swiftdata and making sure Phrase is stored
     }

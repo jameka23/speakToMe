@@ -16,17 +16,21 @@ enum AppTab: Hashable {
 
 struct MainTabView: View {
     @State private var selectedTab: AppTab = .home
+    @State private var phraseToReuse: String?
 
     
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab( "Home", systemImage: "house", value: .home) {
-                ContentView()
+                ContentView(phraseToReuse: $phraseToReuse)
             }
 
-            Tab("History", systemImage: "clock", value: .history){
-                HistoryView()
-            }
+            Tab("History", systemImage: "clock", value: .history) {
+                            HistoryView { phraseText in
+                                phraseToReuse = phraseText
+                                selectedTab = .home
+                            }
+                        }
             
             Tab("Settings", systemImage: "gearshape", value: .settings) {
                 SettingsView()
@@ -49,4 +53,5 @@ private extension View {
 
 #Preview {
     MainTabView()
+        .modelContainer(for: Phrase.self, inMemory: true)
 }
