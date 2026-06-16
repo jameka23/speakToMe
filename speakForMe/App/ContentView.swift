@@ -98,5 +98,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Phrase.self, inMemory: true) // this helps with xcode bs and offline support
+        .modelContainer(for: Phrase.self, inMemory: true) // this helps with xcode bs and offline support as chatgpt says “Use a temporary SwiftData container that disappears when the preview reloads.” lol this goober lol love you chat
 }
