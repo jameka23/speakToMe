@@ -13,70 +13,103 @@ struct ContentView: View {
     // adding model context
     @Environment(\.modelContext) private var modelContext
     
+    @Query(sort: \Phrase.lastUsedAt, order: .reverse) private var savedPhrases: [Phrase]
+    
     @Binding var phraseToReuse: String?
     
     @State private var speechService = SpeechService()
     @State private var draft = SentenceDraft()
     
+
+    
     private let predictionService = PredictionService()
     
     private var predictionResult: PredictionResult {
-        predictionService.predict(for: draft)
+        predictionService.predict(for: draft, savedPhrases: savedPhrases)
     }
     
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 28) {
             Text(draft.text.isEmpty ? "Build your sentence..." : draft.text)
                 .font(.title2)
-                .frame(maxWidth: .infinity, minHeight: 80)
+                .fontWeight(.semibold)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, minHeight: 100)
                 .padding()
                 .background(.gray.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .accessibilityLabel("Current sentence")
+                .accessibilityValue(draft.text.isEmpty ? "No words added yet" : draft.text)
             
             LazyVGrid(
                 columns: [
-                    GridItem(.adaptive(minimum: 120), spacing: 12)
+                    GridItem(.adaptive(minimum: 140), spacing: 16)
                 ],
-                spacing: 12
+                spacing: 16
             ) {
                 ForEach(predictionResult.suggestions) { word in
-                    Button(word.text) {
+                    Button {
                         draft.words.append(word.text)
+                    } label: {
+                        Text(word.text)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity, minHeight: 72)
                     }
-                    .font(.title3)
-                    .frame(maxWidth: .infinity, minHeight: 60)
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .accessibilityLabel("Add \(word.text)")
+                    .accessibilityHint("Adds \(word.text) to the current sentence")
                 }
             }
             
-            HStack {
-                Button("Delete") {
+            HStack(spacing: 14) {
+                Button {
                     guard !draft.words.isEmpty else { return }
                     draft.words.removeLast()
+                } label: {
+                    Label("Delete", systemImage: "delete.left")
+                        .frame(maxWidth: .infinity, minHeight: 56)
                 }
                 .buttonStyle(.bordered)
+                .controlSize(.large)
+                .disabled(draft.words.isEmpty)
+                .accessibilityLabel("Delete last word")
                 
-                Button("Clear") {
+                Button {
                     draft.words.removeAll()
+                } label: {
+                    Label("Clear", systemImage: "xmark.circle")
+                        .frame(maxWidth: .infinity, minHeight: 56)
                 }
                 .buttonStyle(.bordered)
+                .controlSize(.large)
+                .disabled(draft.words.isEmpty)
+                .accessibilityLabel("Clear sentence")
                 
-                Button("Speak") {
+                Button {
                     speakAndSave()
+                } label: {
+                    Label("Speak", systemImage: "speaker.wave.2.fill")
+                        .frame(maxWidth: .infinity, minHeight: 56)
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .disabled(draft.text.isEmpty)
+                .accessibilityLabel("Speak sentence")
+                .accessibilityHint("Speaks the current sentence out loud")
             }
         }
         .padding()
+        .dynamicTypeSize(...DynamicTypeSize.accessibility3)
         .onChange(of: phraseToReuse) { _, newValue in
-                    guard let newValue else { return }
+            guard let newValue else { return }
 
-                    draft.words = newValue
-                        .split(separator: " ")
-                        .map(String.init)
+            draft.words = newValue
+                .split(separator: " ")
+                .map(String.init)
 
-                    phraseToReuse = nil
+            phraseToReuse = nil
         }
     }
     
@@ -88,15 +121,24 @@ struct ContentView: View {
         
         speechService.speak(text)
         
-        let phrase = Phrase(
-            text: text,
-            createdAt: .now,
-            lastUsedAt: .now,
-            useCount: 1,
-            isFavorite: false
-        )
         
-        modelContext.insert(phrase) // insert newly created Phrase entity
+        // double check if phrase is already in history and if it is, update count else insert as new 
+        if let existingPhrase = savedPhrases.first(where: {
+                $0.text.lowercased() == text.lowercased()
+            }) {
+                existingPhrase.useCount += 1
+                existingPhrase.lastUsedAt = .now
+            } else {
+                let phrase = Phrase(
+                    text: text,
+                    createdAt: .now,
+                    lastUsedAt: .now,
+                    useCount: 1,
+                    isFavorite: false
+                )
+
+                modelContext.insert(phrase)// insert newly created Phrase entity
+            }
         
         do {
             try modelContext.save()

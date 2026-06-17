@@ -26,11 +26,11 @@ struct MainTabView: View {
             }
 
             Tab("History", systemImage: "clock", value: .history) {
-                            HistoryView { phraseText in
-                                phraseToReuse = phraseText
-                                selectedTab = .home
-                            }
-                        }
+                HistoryView { phraseText in
+                    phraseToReuse = phraseText
+                    selectedTab = .home
+                }
+            }
             
             Tab("Settings", systemImage: "gearshape", value: .settings) {
                 SettingsView()

@@ -1,24 +1,52 @@
 import SwiftUI
 import SwiftData
 
+enum HistorySortOption: String, CaseIterable, Identifiable {
+    case recent = "Recent"
+    case mostUsed = "Most Used"
+
+    var id: String { rawValue }
+}
+
 struct HistoryView: View {
 
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \Phrase.lastUsedAt, order: .reverse) private var phrases: [Phrase]
+    @Query private var phrases: [Phrase]
 
     @State private var speechService = SpeechService()
+    @State private var sortOption: HistorySortOption = .recent
 
     let onReusePhrase: (String) -> Void
+
+    private var sortedPhrases: [Phrase] {
+        phrases.sorted { first, second in
+            if first.isFavorite != second.isFavorite {
+                return first.isFavorite && !second.isFavorite
+            }
+
+            switch sortOption {
+            case .recent:
+                return first.lastUsedAt > second.lastUsedAt
+
+            case .mostUsed:
+                if first.useCount != second.useCount {
+                    return first.useCount > second.useCount
+                }
+
+                return first.lastUsedAt > second.lastUsedAt
+            }
+        }
+    }
 
     var body: some View {
         NavigationStack {
             List {
-                if phrases.isEmpty {
+                if sortedPhrases.isEmpty {
                     Text("No spoken phrases yet.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(phrases) { phrase in
+                    ForEach(sortedPhrases) { phrase in
                         HStack(spacing: 12) {
                             Button {
                                 reusePhrase(phrase)
@@ -34,6 +62,8 @@ struct HistoryView: View {
                                 }
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Reuse phrase \(phrase.text)")
+                            .accessibilityHint("Loads this phrase on the Home screen")
 
                             Spacer()
 
@@ -43,6 +73,7 @@ struct HistoryView: View {
                                 Image(systemName: phrase.isFavorite ? "star.fill" : "star")
                             }
                             .buttonStyle(.borderless)
+                            .accessibilityLabel(phrase.isFavorite ? "Remove from favorites" : "Add to favorites")
 
                             Button {
                                 speakPhraseAgain(phrase)
@@ -50,6 +81,7 @@ struct HistoryView: View {
                                 Image(systemName: "speaker.wave.2.fill")
                             }
                             .buttonStyle(.borderless)
+                            .accessibilityLabel("Speak phrase again")
                         }
                         .padding(.vertical, 4)
                     }
@@ -57,6 +89,16 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Picker("Sort", selection: $sortOption) {
+                        ForEach(HistorySortOption.allCases) { option in
+                            Text(option.rawValue).tag(option)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+            }
         }
     }
 
@@ -83,7 +125,7 @@ struct HistoryView: View {
 
     private func deletePhrases(at offsets: IndexSet) {
         for index in offsets {
-            modelContext.delete(phrases[index])
+            modelContext.delete(sortedPhrases[index])
         }
 
         saveChanges()
