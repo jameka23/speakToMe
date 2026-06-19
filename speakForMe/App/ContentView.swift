@@ -29,78 +29,111 @@ struct ContentView: View {
     }
     
     var body: some View {
-        VStack(spacing: 28) {
-            Text(draft.text.isEmpty ? "Build your sentence..." : draft.text)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, minHeight: 100)
-                .padding()
-                .background(.gray.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .accessibilityLabel("Current sentence")
-                .accessibilityValue(draft.text.isEmpty ? "No words added yet" : draft.text)
-            
-            LazyVGrid(
-                columns: [
-                    GridItem(.adaptive(minimum: 140), spacing: 16)
-                ],
-                spacing: 16
-            ) {
-                ForEach(predictionResult.suggestions) { word in
-                    Button {
-                        draft.words.append(word.text)
-                    } label: {
-                        Text(word.text)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity, minHeight: 72)
+        GeometryReader { geometry in
+            let isCompactHeight = geometry.size.height < 700
+            let horizontalPadding: CGFloat = 16
+            let verticalSpacing: CGFloat = isCompactHeight ? 14 : 24
+            let sentenceMinHeight: CGFloat = isCompactHeight ? 80 : 110
+            let wordButtonMinHeight: CGFloat = isCompactHeight ? 58 : 72
+            let actionButtonMinHeight: CGFloat = isCompactHeight ? 50 : 56
+            let gridSpacing: CGFloat = isCompactHeight ? 12 : 16
+
+            ScrollView {
+                VStack(spacing: verticalSpacing) {
+                    Text(draft.text.isEmpty ? "Build your sentence..." : draft.text)
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.75)
+                        .lineLimit(3)
+                        .frame(maxWidth: .infinity, minHeight: sentenceMinHeight)
+                        .padding()
+                        .background(.gray.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .accessibilityLabel("Current sentence")
+                        .accessibilityValue(draft.text.isEmpty ? "No words added yet" : draft.text)
+
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: gridSpacing),
+                            GridItem(.flexible(), spacing: gridSpacing)
+                        ],
+                        spacing: gridSpacing
+                    ) {
+                        ForEach(predictionResult.suggestions) { word in
+                            Button {
+                                draft.words.append(word.text)
+                            } label: {
+                                Text(word.text)
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .minimumScaleFactor(0.75)
+                                    .lineLimit(1)
+                                    .frame(maxWidth: .infinity, minHeight: wordButtonMinHeight)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            .accessibilityLabel("Add \(word.text)")
+                            .accessibilityHint("Adds \(word.text) to the current sentence")
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .accessibilityLabel("Add \(word.text)")
-                    .accessibilityHint("Adds \(word.text) to the current sentence")
+
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            Button {
+                                guard !draft.words.isEmpty else { return }
+                                draft.words.removeLast()
+                            } label: {
+                                Label("Delete", systemImage: "delete.left")
+                                    .font(.headline)
+                                    .minimumScaleFactor(0.75)
+                                    .lineLimit(1)
+                                    .frame(maxWidth: .infinity, minHeight: actionButtonMinHeight)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.large)
+                            .disabled(draft.words.isEmpty)
+                            .accessibilityLabel("Delete last word")
+
+                            Button {
+                                draft.words.removeAll()
+                            } label: {
+                                Label("Clear", systemImage: "xmark.circle")
+                                    .font(.headline)
+                                    .minimumScaleFactor(0.75)
+                                    .lineLimit(1)
+                                    .frame(maxWidth: .infinity, minHeight: actionButtonMinHeight)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.large)
+                            .disabled(draft.words.isEmpty)
+                            .accessibilityLabel("Clear sentence")
+                        }
+
+                        Button {
+                            speakAndSave()
+                        } label: {
+                            Label("Speak Sentence", systemImage: "speaker.wave.2.fill")
+                                .font(.headline)
+                                .minimumScaleFactor(0.75)
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, minHeight: actionButtonMinHeight)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .disabled(draft.text.isEmpty)
+                        .accessibilityLabel("Speak sentence")
+                        .accessibilityHint("Speaks the current sentence out loud")
+                    }
                 }
+                .padding(.horizontal, horizontalPadding)
+                .padding(.top, isCompactHeight ? 12 : 20)
+                .padding(.bottom, 24)
+                .frame(maxWidth: 700)
+                .frame(maxWidth: .infinity)
             }
-            
-            HStack(spacing: 14) {
-                Button {
-                    guard !draft.words.isEmpty else { return }
-                    draft.words.removeLast()
-                } label: {
-                    Label("Delete", systemImage: "delete.left")
-                        .frame(maxWidth: .infinity, minHeight: 56)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .disabled(draft.words.isEmpty)
-                .accessibilityLabel("Delete last word")
-                
-                Button {
-                    draft.words.removeAll()
-                } label: {
-                    Label("Clear", systemImage: "xmark.circle")
-                        .frame(maxWidth: .infinity, minHeight: 56)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .disabled(draft.words.isEmpty)
-                .accessibilityLabel("Clear sentence")
-                
-                Button {
-                    speakAndSave()
-                } label: {
-                    Label("Speak", systemImage: "speaker.wave.2.fill")
-                        .frame(maxWidth: .infinity, minHeight: 56)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(draft.text.isEmpty)
-                .accessibilityLabel("Speak sentence")
-                .accessibilityHint("Speaks the current sentence out loud")
-            }
+            .scrollIndicators(.hidden)
         }
-        .padding()
         .dynamicTypeSize(...DynamicTypeSize.accessibility3)
         .onChange(of: phraseToReuse) { _, newValue in
             guard let newValue else { return }
